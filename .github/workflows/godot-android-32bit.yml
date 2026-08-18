@@ -34,18 +34,39 @@ jobs:
       - name: Patch project settings for 32-bit and OpenGL
         run: |
           # Принудительно меняем в настройках проекта рендер на OpenGL (Compatibility)
-          # Это критично, так как 32-битные процессоры почти никогда не поддерживают Vulkan игры
           sed -i 's/rendering\/renderer\/rendering_method=.*/rendering\/renderer\/rendering_method="gl_compatibility"/' project.godot
           sed -i 's/rendering\/renderer\/rendering_method.mobile=.*/rendering\/renderer\/rendering_method.mobile="gl_compatibility"/' project.godot
           
-          # Если файла настроек экспорта еще нет, создаем базовый для Android 32-bit
-          if [ ! -f "export_presets.cfg" ]; then
-            echo -e "[preset.0]\nname=\"Android 32bit\"\nplatform=\"Android\"\nrunnable=true\n[preset.0.options]\narchitectures/armeabi-v7a=true\narchitectures/arm64-v8a=false\narchitectures/x86=false\narchitectures/x86_64=false\ncustom_template/release=\"\"\nrendering/renderer=\"gl_compatibility\"" > export_presets.cfg
-          else
-            # Если файл существует, отключаем 64-бит и включаем только 32-бит (armeabi-v7a)
-            sed -i 's/architectures\/arm64-v8a=.*/architectures\/arm64-v8a=false/' export_presets.cfg
-            sed -i 's/architectures\/armeabi-v7a=.*/architectures\/armeabi-v7a=true/' export_presets.cfg
-          fi
+          # Полностью удаляем старый файл экспорта, если он был, и создаем чистый пресет строго для 32-бит
+          rm -f export_presets.cfg
+          cat << 'EOF' > export_presets.cfg
+          [preset.0]
+          name="Android 32bit"
+          platform="Android"
+          runnable=true
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/BuckshotRoulette32.apk"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.0.options]
+          architectures/armeabi-v7a=true
+          architectures/arm64-v8a=false
+          architectures/x86=false
+          architectures/x86_64=false
+          rendering/renderer="gl_compatibility"
+          package/unique_name="com.mobile.buckshot.roulette.32bit"
+          package/name="Buckshot Roulette 32bit"
+          package/signed=true
+          keystore/debug="debug.keystore"
+          keystore/debug_user="androiddebugkey"
+          keystore/debug_password="android"
+          EOF
 
       - name: Create Keystore for Android signing
         run: |
