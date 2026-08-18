@@ -1,0 +1,66 @@
+name: Godot 4 - Build 32-bit Mobile Buckshot
+on:
+  workflow_dispatch: # Кнопка ручного запуска
+
+env:
+  GODOT_VERSION: 4.3 # Измените версию (например на 4.1.1 или 4.2), если порт написан под другую версию Godot
+
+jobs:
+  android-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Godot Templates and Export Tools
+        run: |
+          # Скачиваем консольную версию Godot для Linux сервера
+          wget https://github.com{{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          unzip Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+          
+          # Скачиваем шаблоны экспорта (Export Templates) для Android
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          wget https://github.com{{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          unzip Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz -d /tmp
+          mv /tmp/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+      - name: Patch project settings for 32-bit and OpenGL
+        run: |
+          # Принудительно меняем в настройках проекта рендер на OpenGL (Compatibility)
+          # Это критично, так как 32-битные процессоры почти никогда не поддерживают Vulkan игры
+          sed -i 's/rendering\/renderer\/rendering_method=.*/rendering\/renderer\/rendering_method="gl_compatibility"/' project.godot
+          sed -i 's/rendering\/renderer\/rendering_method.mobile=.*/rendering\/renderer\/rendering_method.mobile="gl_compatibility"/' project.godot
+          
+          # Если файла настроек экспорта еще нет, создаем базовый для Android 32-bit
+          if [ ! -f "export_presets.cfg" ]; then
+            echo -e "[preset.0]\nname=\"Android 32bit\"\nplatform=\"Android\"\nrunnable=true\n[preset.0.options]\narchitectures/armeabi-v7a=true\narchitectures/arm64-v8a=false\narchitectures/x86=false\narchitectures/x86_64=false\ncustom_template/release=\"\"\nrendering/renderer=\"gl_compatibility\"" > export_presets.cfg
+          else
+            # Если файл существует, отключаем 64-бит и включаем только 32-бит (armeabi-v7a)
+            sed -i 's/architectures\/arm64-v8a=.*/architectures\/arm64-v8a=false/' export_presets.cfg
+            sed -i 's/architectures\/armeabi-v7a=.*/architectures\/armeabi-v7a=true/' export_presets.cfg
+          fi
+
+      - name: Create Keystore for Android signing
+        run: |
+          # Генерируем временный цифровой ключ, без которого Android-приложение не установится
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
+
+      - name: Export APK via Godot
+        run: |
+          mkdir -p build/
+          # Запуск компиляции проекта Godot в режиме "через консоль"
+          godot --headless --export-release "Android 32bit" build/BuckshotRoulette32.apk
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Buckshot-Roulette-Android-32bit
+          path: build/BuckshotRoulette32.apk
+          
