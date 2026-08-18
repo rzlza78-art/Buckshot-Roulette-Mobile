@@ -19,7 +19,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Load Godot Engine & Templates Officially
-        uses: chickenandpork/setup-godot@v1
+        uses: chickensoft-games/setup-godot@v2
         with:
           godot-version: '4.3'
           include-templates: 'true'
