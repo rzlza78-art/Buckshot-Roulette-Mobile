@@ -17,14 +17,16 @@ jobs:
 
       - name: Install Godot Templates and Export Tools
         run: |
-          # Скачиваем консольную версию Godot 4.3 для Linux напрямую
-          wget https://github.com
+          # Скачиваем стабильную версию Godot 4.3 с официального зеркала TuxFamily
+          wget https://tuxfamily.org
           unzip Godot_v4.3-stable_linux.x86_64.zip
           sudo mv Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
           
-          # Скачиваем и распаковываем шаблоны экспорта для Android
+          # Создаем папку для шаблонов экспорта
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
-          wget https://github.com
+          
+          # Скачиваем шаблоны экспорта Android с TuxFamily
+          wget https://tuxfamily.org
           unzip Godot_v4.3-stable_export_templates.tpz -d /tmp
           mv /tmp/templates/* ~/.local/share/godot/export_templates/4.3.stable/
 
