@@ -18,21 +18,6 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Godot Templates and Export Tools
-        run: |
-          # Скачиваем Godot через curl с поддержкой редиректов (-L)
-          curl -L -o Godot_v4.3-stable_linux.x86_64.zip https://tuxfamily.org
-          unzip Godot_v4.3-stable_linux.x86_64.zip
-          sudo mv Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
-          
-          # Создаем папку для шаблонов экспорта
-          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
-          
-          # Скачиваем шаблоны экспорта через curl
-          curl -L -o Godot_v4.3-stable_export_templates.tpz https://tuxfamily.org
-          unzip Godot_v4.3-stable_export_templates.tpz -d /tmp
-          mv /tmp/templates/* ~/.local/share/godot/export_templates/4.3.stable/
-
       - name: Patch project settings for 32-bit and OpenGL
         run: |
           # Принудительно меняем в настройках проекта рендер на OpenGL (Compatibility)
@@ -74,10 +59,14 @@ jobs:
         run: |
           keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
 
-      - name: Export APK via Godot
-        run: |
-          mkdir -p build/
-          godot --headless --export-release "Android 32bit" build/BuckshotRoulette32.apk
+      - name: Export APK via Official Godot Action
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot_version: 4.3
+          release_type: release
+          export_debug: false
+          relative_project_path: ./
+          archive_output: false
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
