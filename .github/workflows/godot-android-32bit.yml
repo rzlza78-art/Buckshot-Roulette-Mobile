@@ -2,9 +2,6 @@ name: Godot 4 - Build 32-bit Mobile Buckshot
 on:
   workflow_dispatch: # Кнопка ручного запуска
 
-env:
-  GODOT_VERSION: 4.3 # Измените версию (например на 4.1.1 или 4.2), если порт написан под другую версию Godot
-
 jobs:
   android-build:
     runs-on: ubuntu-latest
@@ -20,16 +17,16 @@ jobs:
 
       - name: Install Godot Templates and Export Tools
         run: |
-          # Скачиваем консольную версию Godot для Linux сервера
-          wget https://github.com{{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
-          unzip Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
-          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+          # Скачиваем консольную версию Godot 4.3 для Linux напрямую
+          wget https://github.com
+          unzip Godot_v4.3-stable_linux.x86_64.zip
+          sudo mv Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
           
-          # Скачиваем шаблоны экспорта (Export Templates) для Android
-          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
-          wget https://github.com{{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
-          unzip Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz -d /tmp
-          mv /tmp/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+          # Скачиваем и распаковываем шаблоны экспорта для Android
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
+          wget https://github.com
+          unzip Godot_v4.3-stable_export_templates.tpz -d /tmp
+          mv /tmp/templates/* ~/.local/share/godot/export_templates/4.3.stable/
 
       - name: Patch project settings for 32-bit and OpenGL
         run: |
@@ -37,7 +34,7 @@ jobs:
           sed -i 's/rendering\/renderer\/rendering_method=.*/rendering\/renderer\/rendering_method="gl_compatibility"/' project.godot
           sed -i 's/rendering\/renderer\/rendering_method.mobile=.*/rendering\/renderer\/rendering_method.mobile="gl_compatibility"/' project.godot
           
-          # Полностью удаляем старый файл экспорта, если он был, и создаем чистый пресет строго для 32-бит
+          # Пересоздаем чистый файл пресета строго под 32-бит
           rm -f export_presets.cfg
           cat << 'EOF' > export_presets.cfg
           [preset.0]
@@ -70,13 +67,11 @@ jobs:
 
       - name: Create Keystore for Android signing
         run: |
-          # Генерируем временный цифровой ключ, без которого Android-приложение не установится
           keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
 
       - name: Export APK via Godot
         run: |
           mkdir -p build/
-          # Запуск компиляции проекта Godot в режиме "через консоль"
           godot --headless --export-release "Android 32bit" build/BuckshotRoulette32.apk
 
       - name: Upload Artifact
