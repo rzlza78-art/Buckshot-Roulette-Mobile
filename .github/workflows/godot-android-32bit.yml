@@ -21,9 +21,10 @@ jobs:
       - name: Setup Godot Engine
         uses: chickensoft-games/setup-godot@v2
         with:
-          # По умолчанию ставим последнюю стабильную Godot 4.
-          # Если сборка упадет с ошибкой версии, здесь можно будет поменять на 4.0, 4.1, 4.2 и т.д.
           version: 4.3.0
+          # Отключаем Mono, так как большинство проектов используют стандартный GDScript.
+          # Если проект точно на C#, измените значение ниже на true.
+          use-mono: false
           include-templates: true
 
       - name: Create export directory
@@ -31,7 +32,12 @@ jobs:
 
       - name: Godot Android Export
         run: |
-          godot --headless --export-release "Android" build/android/game-32bit.apk
+          # Скрипт сам найдет, где лежит файл project.godot, даже если он в подпапке
+          PROJECT_PATH=$(find . -name "project.godot" -exec dirname {} \;)
+          echo "Проект найден в папке: $PROJECT_PATH"
+          
+          # Запуск сборки с подробным выводом логов (--verbose)
+          godot --headless --path "$PROJECT_PATH" --export-release "Android" build/android/game-32bit.apk --verbose
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
