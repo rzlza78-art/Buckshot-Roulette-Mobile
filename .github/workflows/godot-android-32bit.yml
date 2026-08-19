@@ -21,7 +21,7 @@ jobs:
       - name: Load Godot Engine & Templates Officially
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: '4.1.2' # Откатываемся на версию 2024 года для полной совместимости
+          version: '4.1.2'
           use-dotnet: 'false'
 
       - name: Patch project settings for 32-bit and OpenGL
@@ -41,7 +41,7 @@ jobs:
           export_filter="all_resources"
           include_filter=""
           exclude_filter=""
-          export_path="build/BuckshotRoulette32.apk"
+          export_path="BuckshotRoulette32.apk"
           encryption_include_filters=""
           encryption_exclude_filters=""
           encrypt_pck=false
@@ -67,16 +67,21 @@ jobs:
 
       - name: Export APK via Godot
         run: |
-          mkdir -p build/
           # Импортируем ресурсы в контексте версии 4.1.2
           godot --headless --editor --import --quit || true
           
-          # Запускаем экспорт
-          godot --headless --export-release "Android 32bit" build/BuckshotRoulette32.apk
+          # Запускаем экспорт прямо в корень проекта (так надежнее для Godot 4.1)
+          godot --headless --export-release "Android 32bit" BuckshotRoulette32.apk
+          
+          # Проверяем, создался ли файл. Если нет — сборка упадет с ошибкой, а не притворится успешной
+          if [ ! -f "BuckshotRoulette32.apk" ]; then
+            echo "КРИТИЧЕСКАЯ ОШИБКА: APK файл не был создан движком Godot!"
+            exit 1
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Buckshot-Roulette-Android-32bit
-          path: build/BuckshotRoulette32.apk
+          path: BuckshotRoulette32.apk
           
