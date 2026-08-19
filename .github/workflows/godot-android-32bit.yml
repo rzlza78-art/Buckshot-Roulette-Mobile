@@ -21,8 +21,8 @@ jobs:
       - name: Load Godot Engine & Templates Officially
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: '4.3.0'
-          use-dotnet: 'false' # Принудительно отключаем Mono/C#, скачиваем стандартный Godot
+          version: '4.1.2' # Откатываемся на версию 2024 года для полной совместимости
+          use-dotnet: 'false'
 
       - name: Patch project settings for 32-bit and OpenGL
         run: |
@@ -68,10 +68,10 @@ jobs:
       - name: Export APK via Godot
         run: |
           mkdir -p build/
-          # Шаг 1: Принудительно импортируем все ресурсы игры в кэш
+          # Импортируем ресурсы в контексте версии 4.1.2
           godot --headless --editor --import --quit || true
           
-          # Шаг 2: Чистый экспорт готового 32-битного APK
+          # Запускаем экспорт
           godot --headless --export-release "Android 32bit" build/BuckshotRoulette32.apk
 
       - name: Upload Artifact
