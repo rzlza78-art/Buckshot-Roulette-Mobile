@@ -1,87 +1,41 @@
-name: Godot 4 - Build 32-bit Mobile Buckshot
-on:
-  workflow_dispatch: # Кнопка ручного запуска
+name: Build 32-bit Godot 4 Game
+on: [push, workflow_dispatch]
 
 jobs:
-  android-build:
+  export-android:
     runs-on: ubuntu-latest
+    name: Export 32-bit APK
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Load Godot Engine & Templates Officially
+      - name: Setup Godot Engine
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: '4.0.3' # Переключаемся на базовую Godot 4.0.3 для старых файлов сцен
-          use-dotnet: 'false'
+          # По умолчанию ставим последнюю стабильную Godot 4.
+          # Если сборка упадет с ошибкой версии, здесь можно будет поменять на 4.0, 4.1, 4.2 и т.д.
+          version: 4.3.0
+          include-templates: true
 
-      - name: Patch project settings for 32-bit and OpenGL
+      - name: Create export directory
+        run: mkdir -p build/android
+
+      - name: Godot Android Export
         run: |
-          # Принудительно меняем в настройках проекта рендер на OpenGL (Compatibility)
-          sed -i 's/rendering\/renderer\/rendering_method=.*/rendering\/renderer\/rendering_method="gl_compatibility"/' project.godot
-          sed -i 's/rendering\/renderer\/rendering_method.mobile=.*/rendering\/renderer\/rendering_method.mobile="gl_compatibility"/' project.godot
-          
-          # Пересоздаем чистый файл пресета строго под 32-бит
-          rm -f export_presets.cfg
-          cat << 'EOF' > export_presets.cfg
-          [preset.0]
-          name="Android 32bit"
-          platform="Android"
-          runnable=true
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="BuckshotRoulette32.apk"
-          encryption_include_filters=""
-          encryption_exclude_filters=""
-          encrypt_pck=false
-          encrypt_directory=false
+          godot --headless --export-release "Android" build/android/game-32bit.apk
 
-          [preset.0.options]
-          architectures/armeabi-v7a=true
-          architectures/arm64-v8a=false
-          architectures/x86=false
-          architectures/x86_64=false
-          rendering/renderer="gl_compatibility"
-          package/unique_name="com.mobile.buckshot.roulette.32bit"
-          package/name="Buckshot Roulette 32bit"
-          package/signed=true
-          keystore/debug="debug.keystore"
-          keystore/debug_user="androiddebugkey"
-          keystore/debug_password="android"
-          EOF
-
-      - name: Create Keystore for Android signing
-        run: |
-          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
-
-      - name: Export APK via Godot
-        run: |
-          # Импортируем ресурсы в контексте версии 4.0.3
-          godot --headless --editor --import --quit || true
-          
-          # Запускаем экспорт
-          godot --headless --export-release "Android 32bit" BuckshotRoulette32.apk
-          
-          # Проверяем наличие готового файла
-          if [ ! -f "BuckshotRoulette32.apk" ]; then
-            echo "КРИТИЧЕСКАЯ ОШИБКА: APK файл не был создан движком Godot!"
-            exit 1
-          fi
-
-      - name: Upload Artifact
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Buckshot-Roulette-Android-32bit
-          path: BuckshotRoulette32.apk
+          name: game-32bit-apk
+          path: build/android/game-32bit.apk
           
