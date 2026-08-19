@@ -68,6 +68,10 @@ jobs:
       - name: Export APK via Godot
         run: |
           mkdir -p build/
+          # Шаг 1: Принудительно импортируем все ресурсы игры в кэш
+          godot --headless --editor --import --quit || true
+          
+          # Шаг 2: Чистый экспорт готового 32-битного APK
           godot --headless --export-release "Android 32bit" build/BuckshotRoulette32.apk
 
       - name: Upload Artifact
