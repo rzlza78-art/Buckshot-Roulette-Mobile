@@ -21,8 +21,7 @@ jobs:
       - name: Load Godot Engine & Templates Officially
         uses: chickensoft-games/setup-godot@v2
         with:
-          godot-version: '4.3'
-          include-templates: 'true'
+          version: '4.3.0' # Используем 'version' вместо 'godot-version' и указываем три цифры
 
       - name: Patch project settings for 32-bit and OpenGL
         run: |
