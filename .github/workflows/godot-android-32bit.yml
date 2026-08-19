@@ -21,7 +21,8 @@ jobs:
       - name: Load Godot Engine & Templates Officially
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: '4.3.0' # Используем 'version' вместо 'godot-version' и указываем три цифры
+          version: '4.3.0'
+          use-dotnet: 'false' # Принудительно отключаем Mono/C#, скачиваем стандартный Godot
 
       - name: Patch project settings for 32-bit and OpenGL
         run: |
