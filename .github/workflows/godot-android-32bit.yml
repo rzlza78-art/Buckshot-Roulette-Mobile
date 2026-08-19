@@ -21,7 +21,7 @@ jobs:
       - name: Load Godot Engine & Templates Officially
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: '4.1.2'
+          version: '4.0.3' # Переключаемся на базовую Godot 4.0.3 для старых файлов сцен
           use-dotnet: 'false'
 
       - name: Patch project settings for 32-bit and OpenGL
@@ -67,13 +67,13 @@ jobs:
 
       - name: Export APK via Godot
         run: |
-          # Импортируем ресурсы в контексте версии 4.1.2
+          # Импортируем ресурсы в контексте версии 4.0.3
           godot --headless --editor --import --quit || true
           
-          # Запускаем экспорт прямо в корень проекта (так надежнее для Godot 4.1)
+          # Запускаем экспорт
           godot --headless --export-release "Android 32bit" BuckshotRoulette32.apk
           
-          # Проверяем, создался ли файл. Если нет — сборка упадет с ошибкой, а не притворится успешной
+          # Проверяем наличие готового файла
           if [ ! -f "BuckshotRoulette32.apk" ]; then
             echo "КРИТИЧЕСКАЯ ОШИБКА: APK файл не был создан движком Godot!"
             exit 1
